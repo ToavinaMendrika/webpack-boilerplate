@@ -1,4 +1,5 @@
 const path = require('path')
+const MiniCssExtractPlugin  = require('mini-css-extract-plugin')
 
 const paths = {
     scss: './src/scss/styles.scss',
@@ -12,6 +13,7 @@ module.exports = {
     entry: [paths.scss, paths.js],
     devtool: 'source-map',
     output: {
+        publicPath: 'public',
         path: paths.outputDir,
         sourceMapFilename: '[file].map[query]',
         filename: 'js/[name].js'
@@ -22,21 +24,37 @@ module.exports = {
             {
                 test: /\.scss$/,
                 use: [
-                    {
-                       loader: 'file-loader',
-                       options: {
-                           name: 'css/[name].css'
-                       } 
-                    },
-                    'extract-loader','source-map-loader', 'css-loader?sourceMap', 'postcss-loader', 'sass-loader?sourceMap'
+                    'style-loader', 
+                    MiniCssExtractPlugin.loader ,
+                    'css-loader?sourceMap', 'postcss-loader', 'sass-loader?sourceMap',
                 ]
             },
             {
+                exclude: /node_modules/,
                 test: /\.js$/,
                 use: ['source-map-loader'],
                 enforce: "pre"
+            },
+            {
+                test: /\.(png|jpe?g|gif|svg)$/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            name: 'img/[name].[ext]'
+                        }
+                    }
+                ]
             }
             
         ]
-    }
+    },
+    plugins: [
+        new MiniCssExtractPlugin (
+            {
+                filename: "css/[name].css",
+                chunkFilename: "[id].css"
+            }
+        )
+    ]
 }
