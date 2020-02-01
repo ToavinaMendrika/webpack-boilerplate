@@ -1,17 +1,16 @@
 const path = require('path')
 const fs = require('fs')
-
+const { argv } = require('yargs')
 /**
  *  Webpack plugins
  */
 const MiniCssExtractPlugin  = require('mini-css-extract-plugin')
 const ManifestPlugin = require('webpack-manifest-plugin')
-
 /**
  * Environment
  */
 const __env = process.env.NODE_ENV
-const __hmr = false
+const __hmr = argv.hot
 
 const paths = {
     scss: './src/scss/styles.scss',
@@ -20,7 +19,7 @@ const paths = {
     outputDir: path.resolve(__dirname, 'public/assets')
 }
 
-
+let isDev = __env === 'dev'
 
 let utils = {
 
@@ -47,16 +46,16 @@ console.log('clean up ...')
 utils.cleanup(paths.outputDir)
 console.log('generate assets ...')
 
-module.exports = {
+let webpackConfig = {
     mode: 'development',
     
     entry: [paths.scss, paths.js],
-    devtool: 'source-map',
+    devtool: isDev ? 'source-map' : 'none',
     output: {
-        publicPath: 'public/assets/',
+        publicPath: '/assets/',
         path: paths.outputDir,
         sourceMapFilename: '[file].map[query]',
-        filename: __env === 'dev'? 'js/[name].js' :  'js/[name]-[hash:8].js'
+        filename: isDev ? 'js/[name].js' :  'js/[name]-[hash:8].js'
     },
 
     module: {
@@ -83,7 +82,6 @@ module.exports = {
                         options: {
                             name: '[name].[ext]',
                             outputPath: 'img',
-                            publicPath: '/assets/img',
                         }
                     }
                 ]
@@ -94,8 +92,7 @@ module.exports = {
     plugins: [
         new MiniCssExtractPlugin (
             {
-                filename:  __env === 'dev'? 'css/[name].css' :  'css/[name]-[hash:8].css',
-                chunkFilename: "[id].css"
+                filename:  isDev ? 'css/[name].css' :  'css/[name]-[hash:8].css',
             }
         ),
         new ManifestPlugin({
@@ -108,3 +105,13 @@ module.exports = {
         })
     ]
 }
+
+if(isDev && __hmr) {
+    webpackConfig.devServer = {
+        contentBase: paths.outputDir,
+        compress: true,
+        port: 9000
+    }
+}
+
+module.exports = webpackConfig
