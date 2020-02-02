@@ -51,6 +51,7 @@ let webpackConfig = {
     
     entry: [paths.scss, paths.js],
     devtool: isDev ? 'source-map' : 'none',
+
     output: {
         publicPath: '/assets/',
         path: paths.outputDir,
@@ -58,6 +59,11 @@ let webpackConfig = {
         filename: isDev ? 'js/[name].js' :  'js/[name]-[hash:8].js'
     },
 
+    resolve: {
+        modules: [
+            path.resolve(__dirname, 'node_modules')
+        ]
+    },
     module: {
         rules: [
             {
@@ -71,7 +77,7 @@ let webpackConfig = {
             {
                 exclude: /node_modules/,
                 test: /\.js$/,
-                use: ['source-map-loader'],
+                use: ['babel-loader'],
                 enforce: "pre"
             },
             {
@@ -110,7 +116,8 @@ if(isDev && __hmr) {
     webpackConfig.devServer = {
         contentBase: paths.outputDir,
         compress: true,
-        port: 9000
+        port: 9000,
+        hot: true
     }
 }
 

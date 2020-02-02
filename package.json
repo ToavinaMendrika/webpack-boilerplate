@@ -4,7 +4,8 @@
   "description": "Webpack starter config",
   "main": "index.js",
   "browserslist": [
-    "last 2 versions"
+    "last 2 versions",
+    "not dead"
   ],
   "scripts": {
     "dev": "cross-env NODE_ENV=dev webpack --mode=development",
@@ -18,7 +19,10 @@
   "author": "Toavina Andriantsivolosy",
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.8.4",
+    "@babel/preset-env": "^7.8.4",
     "autoprefixer": "^9.7.3",
+    "babel-loader": "^8.0.6",
     "cross-env": "^7.0.0",
     "css-loader": "^3.4.1",
     "extract-loader": "^3.1.0",
