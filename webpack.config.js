@@ -6,6 +6,7 @@ const { argv } = require('yargs')
  */
 const MiniCssExtractPlugin  = require('mini-css-extract-plugin')
 const ManifestPlugin = require('webpack-manifest-plugin')
+const StyleLintWebpackPlugin = require('stylelint-webpack-plugin');
 /**
  * Environment
  */
@@ -97,7 +98,13 @@ let webpackConfig = {
             {
                 exclude: /node_modules/,
                 test: /\.js$/,
-                use: ['babel-loader'],
+                use: [
+                    'babel-loader',
+                    {
+                        loader: 'eslint-loader',
+                        options: {fix: isDev && !__hmr}
+                    }
+                ],
                 enforce: "pre"
             },
             {
@@ -128,7 +135,14 @@ let webpackConfig = {
             },
             fileName: 'assets.json',
             filter: file => file.path.match(/.*.(css|js|ttf|woff2?)$/)
-        })
+        }),
+        new StyleLintWebpackPlugin({
+                configFile: '.stylelintrc',
+                fix: isDev && !__hmr,
+                quiet: false,
+                files: [ `${paths.assetsPath}/scss/**/*.{css,scss}` ],
+                syntax: 'scss'
+            })
     ]
 }
 
