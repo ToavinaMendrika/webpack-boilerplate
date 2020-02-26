@@ -15,6 +15,7 @@ const __hmr = argv.hot
 const paths = {
     scss: './src/scss/styles.scss',
     js: './src/js/app.js',
+    assetsPath: './src',
     publicPath: path.resolve(__dirname, 'public'),
     outputDir: path.resolve(__dirname, 'public/assets')
 }
@@ -49,8 +50,11 @@ console.log('generate assets ...')
 let webpackConfig = {
     mode: 'development',
     
-    entry: [paths.scss, paths.js],
-    devtool: isDev ? 'source-map' : 'none',
+    entry: [
+        paths.scss,
+        paths.js
+    ],
+    devtool: 'eval-source-map',
 
     output: {
         publicPath: '/assets/',
@@ -59,6 +63,9 @@ let webpackConfig = {
         filename: isDev ? 'js/[name].js' :  'js/[name]-[hash:8].js'
     },
 
+    optimization: {
+        usedExports: true,
+    },
     resolve: {
         modules: [
             path.resolve(__dirname, 'node_modules')
@@ -68,10 +75,23 @@ let webpackConfig = {
         rules: [
             {
                 test: /\.scss$/,
+                include: path.resolve(paths.assetsPath, 'scss'),
                 use: [
-                    'style-loader', 
-                    MiniCssExtractPlugin.loader ,
-                    'css-loader', 'postcss-loader', 'sass-loader',
+                    {
+                        loader: __hmr ? 'style-loader' : MiniCssExtractPlugin.loader
+                    },
+                    {
+                        loader: 'css-loader',
+                        options: { sourceMap: true }
+                    },
+                    {
+                        loader: 'postcss-loader',
+                        options: { sourceMap: true }
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: { sourceMap: true }
+                    }
                 ]
             },
             {
@@ -112,13 +132,20 @@ let webpackConfig = {
     ]
 }
 
-if(isDev && __hmr) {
+if (isDev && __hmr) {
     webpackConfig.devServer = {
-        contentBase: paths.outputDir,
+        host: '0.0.0.0',
+        contentBase: path.join(__dirname, 'src'),
+        headers: { 'Access-Control-Allow-Origin': '*' },
         compress: true,
         port: 9000,
-        hot: true
+        hot: true,
+        inline: true,
+        overlay: true,
+        compress: true,
+        writeToDisk: true,
     }
+
 }
 
 module.exports = webpackConfig

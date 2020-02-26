@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Webpack starter config",
   "main": "index.js",
+  "sideEffects": false,
   "browserslist": [
     "last 2 versions",
     "not dead"
