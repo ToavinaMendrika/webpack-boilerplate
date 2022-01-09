@@ -1,17 +1,17 @@
-const path = require('path')
-const fs = require('fs')
-const { argv } = require('yargs')
+const path = require('path');
+const fs = require('fs');
+const { argv } = require('yargs');
 /**
  *  Webpack plugins
  */
-const MiniCssExtractPlugin  = require('mini-css-extract-plugin')
-const ManifestPlugin = require('webpack-manifest-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const StyleLintWebpackPlugin = require('stylelint-webpack-plugin');
 /**
  * Environment
  */
-const __env = process.env.NODE_ENV
-const __hmr = argv.hot
+const __env = process.env.NODE_ENV;
+const __hmr = argv.hot;
 
 const paths = {
     scss: './src/scss/styles.scss',
@@ -21,18 +21,19 @@ const paths = {
     outputDir: path.resolve(__dirname, 'public/assets')
 }
 
-let isDev = __env === 'dev'
+let isDev = __env === 'dev';
 
 let utils = {
 
     /**
      * Clean directory
-     * @param {striny} directory path to directory to clean up
+     * @param {string} directory path to directory to clean up
      */
-    cleanup(directory) {
+    cleanup (directory) {
         if (fs.existsSync(directory)) {
             fs.readdirSync(directory).forEach((file, index) => {
                 const curPath = path.join(directory, file);
+
                 if (fs.lstatSync(curPath).isDirectory()) { // recurse
                     this.cleanup(curPath);
                 } else { // delete file
@@ -42,15 +43,15 @@ let utils = {
             fs.rmdirSync(directory);
         }
     }
-}
+};
 
-console.log('clean up ...')
-utils.cleanup(paths.outputDir)
-console.log('generate assets ...')
+console.log('clean up ...');
+utils.cleanup(paths.outputDir);
+console.log('generate assets ...');
 
 let webpackConfig = {
     mode: 'development',
-    
+
     entry: [
         paths.scss,
         paths.js
@@ -58,40 +59,44 @@ let webpackConfig = {
     devtool: 'eval-source-map',
 
     output: {
-        publicPath: '/assets/',
+        publicPath: isDev && __hmr ? 'http://localhost:3000/assets/' : '/assets/',
         path: paths.outputDir,
         sourceMapFilename: '[file].map[query]',
-        filename: isDev ? 'js/[name].js' :  'js/[name]-[hash:8].js'
+        filename: isDev ? 'js/[name].js' : 'js/[name]-[fullhash:8].js',
+        assetModuleFilename: '[name][ext][query]'
     },
 
-    optimization: {
-        usedExports: true,
-    },
+    optimization: { usedExports: true },
     resolve: {
         modules: [
             path.resolve(__dirname, 'node_modules')
         ]
     },
+    watchOptions: {
+        aggregateTimeout: 200,
+        poll: 1000
+    },
     module: {
         rules: [
             {
                 test: /\.scss$/,
-                include: path.resolve(paths.assetsPath, 'scss'),
+                // include: path.resolve(paths.assetsPath, 'scss'),
                 use: [
-                    {
-                        loader: __hmr ? 'style-loader' : MiniCssExtractPlugin.loader
-                    },
+                    { loader: __hmr ? 'style-loader' : MiniCssExtractPlugin.loader },
                     {
                         loader: 'css-loader',
-                        options: { sourceMap: true }
+                        options: { sourceMap: isDev }
                     },
                     {
                         loader: 'postcss-loader',
-                        options: { sourceMap: true }
+                        options: { sourceMap: isDev }
                     },
                     {
                         loader: 'sass-loader',
-                        options: { sourceMap: true }
+                        options: {
+                            sourceMap: isDev,
+                            implementation: require('sass')
+                        }
                     }
                 ]
             },
@@ -102,64 +107,59 @@ let webpackConfig = {
                     'babel-loader',
                     {
                         loader: 'eslint-loader',
-                        options: {fix: isDev && !__hmr}
+                        options: { fix: isDev && !__hmr }
                     }
                 ],
-                enforce: "pre"
+                enforce: 'pre'
             },
             {
                 test: /\.(png|jpe?g|gif|svg)$/,
-                use: [
-                    {
-                        loader: 'file-loader',
-                        options: {
-                            name: '[name].[ext]',
-                            outputPath: 'img',
-                        }
-                    }
-                ]
+                type: 'asset/resource',
+                generator: { filename: 'img/[name][ext][query]' }
+            },
+            {
+                test: /\.(otf|ttf|eot|woff)$/,
+                type: 'asset/resource',
+                generator: { filename: 'font/[name][ext][query]' }
             }
-            
+
         ]
     },
     plugins: [
-        new MiniCssExtractPlugin (
-            {
-                filename:  isDev ? 'css/[name].css' :  'css/[name]-[hash:8].css',
-            }
+        new MiniCssExtractPlugin(
+            { filename: isDev ? 'css/[name].css' : 'css/[name]-[fullhash:8].css' }
         ),
-        new ManifestPlugin({
+        new WebpackManifestPlugin({
             seed: {
                 env: __env,
                 hmr: __hmr
             },
             fileName: 'assets.json',
-            filter: file => file.path.match(/.*.(css|js|ttf|woff2?)$/)
+            filter: file => file.path.match(/.*.(css|js)$/)
         }),
         new StyleLintWebpackPlugin({
-                configFile: '.stylelintrc',
-                fix: isDev && !__hmr,
-                quiet: false,
-                files: [ `${paths.assetsPath}/scss/**/*.{css,scss}` ],
-                syntax: 'scss'
-            })
-    ]
-}
+            configFile: '.stylelintrc',
+            fix: isDev && !__hmr,
+            quiet: false,
+            files: [ `${paths.assetsPath}/styles/**/*.{css,scss}` ],
+            syntax: 'scss'
+        })
+    ],
+};
 
 if (isDev && __hmr) {
     webpackConfig.devServer = {
         host: '0.0.0.0',
-        contentBase: path.join(__dirname, 'src'),
+        allowedHosts: 'all',
+        static: { directory: path.join(__dirname, 'dist') },
         headers: { 'Access-Control-Allow-Origin': '*' },
         compress: true,
-        port: 9000,
+        port: 3000,
         hot: true,
-        inline: true,
-        overlay: true,
-        compress: true,
-        writeToDisk: true,
-    }
-
+        liveReload: false,
+        client: { overlay: true },
+        devMiddleware: { writeToDisk: true }
+    };
 }
 
-module.exports = webpackConfig
+module.exports = webpackConfig;

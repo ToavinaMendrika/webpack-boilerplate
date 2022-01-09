@@ -1,8 +1,13 @@
 {
     "map": true,
     "plugins": {
-        "autoprefixer": {
-            
-        }
+        "autoprefixer": {},
+        "postcss-custom-media": {},
+        "postcss-inline-svg": {
+            "paths": [ "./ressources/assets/img/svg" ],
+            "removeStroke": true,
+            "removeFill": true
+        },
+       "@hail2u/css-mqpacker": {}
     }
 }
