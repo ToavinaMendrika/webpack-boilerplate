@@ -4,7 +4,7 @@
         "autoprefixer": {},
         "postcss-custom-media": {},
         "postcss-inline-svg": {
-            "paths": [ "./ressources/assets/img/svg" ],
+            "paths": [ "./src/img/svg" ],
             "removeStroke": true,
             "removeFill": true
         },
