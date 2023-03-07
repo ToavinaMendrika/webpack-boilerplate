@@ -7,6 +7,7 @@ const { argv } = require('yargs');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const StyleLintWebpackPlugin = require('stylelint-webpack-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
 /**
  * Environment
  */
@@ -103,13 +104,7 @@ let webpackConfig = {
             {
                 exclude: /node_modules/,
                 test: /\.js$/,
-                use: [
-                    'babel-loader',
-                    {
-                        loader: 'eslint-loader',
-                        options: { fix: isDev && !__hmr }
-                    }
-                ],
+                use: ['babel-loader'],
                 enforce: 'pre'
             },
             {
@@ -143,6 +138,15 @@ let webpackConfig = {
             quiet: false,
             files: [ `${paths.assetsPath}/styles/**/*.{css,scss}` ],
             syntax: 'scss'
+        }),
+        new ESLintPlugin({
+            extensions: [`js`, `jsx`],
+            fix: isDev && !__hmr,
+            files: [ `${paths.assetsPath}/js/**/*.{js,jsx}`],
+            exclude: [
+                `/node_modules/`,
+                `/bower_components/`
+            ]
         })
     ],
 };
